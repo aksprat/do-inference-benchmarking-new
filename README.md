@@ -90,6 +90,55 @@ doctl apps create --spec .do/app.yaml
 Set the `DO_MODEL_ACCESS_KEY` secret in the dashboard or with
 `doctl apps update`.
 
+## Run on a Droplet (recommended for real benchmarks)
+
+App Platform sits behind a managed proxy with request timeouts and runs on small
+shared instances, so streaming benchmarks can drop with network errors and the
+client box becomes the bottleneck. For accurate, repeatable numbers, run on a
+Droplet, ideally a CPU-Optimized Droplet (16 vCPU / 32 GB) in a region close to
+the endpoint.
+
+### Web app on a Droplet (Docker)
+
+Get the repo onto the Droplet. It is private, so authenticate first:
+
+```bash
+# option 1: GitHub CLI
+gh auth login
+gh repo clone aksprat/do-inference-benchmarking-new
+cd do-inference-benchmarking-new
+
+# option 2: clone with a personal access token
+git clone https://USERNAME:TOKEN@github.com/aksprat/do-inference-benchmarking-new.git
+```
+
+Then one command builds and runs it (Docker is installed automatically):
+
+```bash
+chmod +x scripts/droplet-setup.sh
+export DO_MODEL_ACCESS_KEY=your_key   # optional; omit to let each user paste their own key in the UI
+sudo -E ./scripts/droplet-setup.sh
+```
+
+Open the firewall for the port, ideally restricted to your IP:
+
+```bash
+sudo ufw allow from YOUR_IP to any port 3000 proto tcp
+```
+
+The app is then at `http://YOUR_DROPLET_IP:3000`. Because the API calls now
+originate from the Droplet, latency and throughput numbers are clean. Manage it
+with `docker logs -f do-bench` and `docker restart do-bench`.
+
+Prefer no Docker? Install Node 20, then `npm ci && npm run build && npm start`
+(set `PORT`, and keep it alive with `pm2` or a systemd unit).
+
+### Command-line script on the Droplet
+
+For the cleanest results and the sustained load test, run the bundled script
+directly (next section). On a 16 vCPU box it comfortably drives the heavy
+concurrency levels.
+
 ## Sustained load test → Droplet script
 
 The web app covers warmup, TTFT, and OTPS/TPOT. The **sustained load test** is
