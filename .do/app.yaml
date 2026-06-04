@@ -1,0 +1,34 @@
+# DigitalOcean App Platform spec.
+# Deploy with: doctl apps create --spec .do/app.yaml
+# Or import the repo from the App Platform dashboard (Next.js is auto-detected).
+#
+# Edit the `github` block to point at your repository. If this app lives in a
+# subdirectory of the repo (it does by default: /do-llm-bench), set source_dir
+# to that path. If you push do-llm-bench as its own repo root, use "/".
+name: do-llm-bench
+region: nyc
+services:
+  - name: web
+    environment_slug: node-js
+    github:
+      repo: your-org/your-repo
+      branch: main
+      deploy_on_push: true
+    source_dir: /do-llm-bench
+    build_command: npm run build
+    run_command: npm start
+    http_port: 8080
+    instance_size_slug: apps-s-1vcpu-1gb
+    instance_count: 1
+    health_check:
+      http_path: /
+    envs:
+      # Create a Model Access Key in the DO Control Panel, then set this as an
+      # encrypted secret in the dashboard (or via doctl). Leave the value empty
+      # here so it is not committed.
+      - key: DO_MODEL_ACCESS_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: DO_INFERENCE_BASE_URL
+        scope: RUN_TIME
+        value: https://inference.do-ai.run/v1

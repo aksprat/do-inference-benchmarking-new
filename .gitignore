@@ -1,0 +1,14 @@
+/node_modules
+/.next
+/out
+/build
+*.log
+.env
+.env.local
+.DS_Store
+next-env.d.ts
+/.vercel
+
+# python cache (benchmark script)
+__pycache__/
+*.pyc
